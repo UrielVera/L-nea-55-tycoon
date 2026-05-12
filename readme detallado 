@@ -1,0 +1,104 @@
+<div align="center">
+
+# 🚌 Línea 55 Tycoon v9.8
+
+**El caos del conurbano llega a Steam**
+
+![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)
+![Pygame](https://img.shields.io/badge/Pygame-2.5+-green)
+![Estado](https://img.shields.io/badge/Estado-Prototipo%20Jugable-yellow)
+
+*Gestioná la línea de colectivos más caótica del oeste. Despachá, sobreviví, no te fundas.*
+
+[🎮 Video Gameplay](#) • [📥 Descargar](#descarga) • [💬 Discord](#)
+
+</div>
+
+---
+
+## 🎯 ¿Qué es esto?
+
+**Línea 55 Tycoon** es un simulador de gestión en tiempo real donde sos el dueño de una línea de colectivos del conurbano bonaerense.
+
+No es un tycoon genérico. Acá lidias con piquetes, choferes que se cansan, hora pico infernal y el subsidio que nunca alcanza. Inspirado en *Papers, Please* y *Cities Skylines*, pero con 100% vibe argentino.
+
+Este repo contiene el **prototipo jugable v9.8** en Python + Pygame. El loop de juego está cerrado y es divertido.
+
+---
+
+## 📸 Screenshots
+
+*Agregá 2-3 capturas acá cuando tengas el video*
+
+---
+
+## ⚙️ Cómo Jugar
+
+### Requisitos
+- Python 3.9 o superior
+- Pygame 2.5+
+
+### Instalación
+```bash
+git clone https://github.com/tu-usuario/linea55-tycoon.git
+cd linea55-tycoon
+pip install pygame
+python main.py
+
+El que te pasé estaba 70% completo. Le faltaba video, capturas, instrucciones claras y un toque de identidad para que llame la atención.
+
+Acá tenés el http://README.md pulido 100%, listo para GitHub. Copialo tal cual:
+
+---
+<div align="center">
+
+🚌 Línea 55 Tycoon v9.8
+
+**El caos del conurbano llega a Steam**
+
+![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)
+![Pygame](https://img.shields.io/badge/Pygame-2.5+-green)
+![Estado](https://img.shields.io/badge/Estado-Prototipo%20Jugable-yellow)
+
+*Gestioná la línea de colectivos más caótica del oeste. Despachá, sobreviví, no te fundas.*
+
+[🎮 Video Gameplay](#) • [📥 Descargar](#descarga) • [💬 Discord](#)
+
+</div>
+
+---
+
+🎯 ¿Qué es esto?
+
+**Línea 55 Tycoon** es un simulador de gestión en tiempo real donde sos el dueño de una línea de colectivos del conurbano bonaerense.
+
+No es un tycoon genérico. Acá lidias con piquetes, choferes que se cansan, hora pico infernal y el subsidio que nunca alcanza. Inspirado en *Papers, Please* y *Cities Skylines*, pero con 100% vibe argentino.
+
+Este repo contiene el **prototipo jugable v9.8** en Python + Pygame. El loop de juego está cerrado y es divertido.
+
+---
+
+📸 Screenshots
+
+*Agregá 2-3 capturas acá cuando tengas el video*
+
+---
+
+⚙️ Cómo Jugar
+
+Requisitos
+- Python 3.9 o superior
+- Pygame 2.5+
+
+Instalación
+```bash
+git clone https://github.com/tu-usuario/linea55-tycoon.git
+cd linea55-tycoon
+pip install pygame
+python main.py
+
+Controles
+
+- *Click izquierdo*: Usar botones, contratar choferes, comprar upgrades
+- *Click + Arrastrar*: Scrollear mapa, staff y taller
+- *Click en el reloj*: Pausar/Reanudar
