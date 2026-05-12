@@ -1,0 +1,234 @@
+​1. Modelos de Datos (CoreModels.cs)
+​Mantené este único archivo para las clases de datos. Eliminá cualquier otro que tenga las clases Chofer o Unidad.
+
+using System;
+using UnityEngine;
+
+[Serializable]
+public class Chofer
+{
+    public string nombre;
+    public string personalidad; // "Agresivo", "Tranquilo", "Vago", "Pro"
+    public float sueldo;
+    public float cansancio;
+    public float moral;
+    public bool contratado;
+
+    public Chofer(string n, string p, float s, float m) {
+        nombre = n; personalidad = p; sueldo = s; moral = m;
+        cansancio = 0; contratado = false;
+    }
+}
+
+[Serializable]
+public class Unidad
+{
+    public int id;
+    public int motorLvl = 1;
+    public int frenosLvl = 1;
+    public int pasajeros = 0;
+    public int capacidad = 70;
+    public int currentStopIdx = -1; // -1 = En terminal
+    public float progreso = 0f;
+    public float averiadoTimer = 0f;
+    public int viajesSinService = 0;
+    public RouteData rutaAsignada;
+    public Chofer choferAsignado;
+
+    public void Reset() {
+        currentStopIdx = -1;
+        progreso = 0;
+        pasajeros = 0;
+        choferAsignado = null;
+        rutaAsignada = null;
+    }
+}
+
+
+2. Definición de Rutas y Eventos (ScriptableObjects.cs)
+
+Esto te permite crear rutas y eventos desde el menú de Unity (Click Derecho -> Create -> Tycoon -> ...).
+
+using UnityEngine;
+using System.Collections.Generic;
+
+[CreateAssetMenu(fileName = "NuevaRuta", menuName = "Tycoon/Ruta")]
+public class RouteData : ScriptableObject {
+    public string ID; 
+    public List<string> paradas;
+    public float longitudTramoKM = 2.5f; // Para cálculos de velocidad real
+}
+
+[CreateAssetMenu(fileName = "NuevoEvento", menuName = "Tycoon/Evento")]
+public class GameEvent : ScriptableObject {
+    public string titulo;
+    [TextArea] public string descripcion;
+    public string[] opciones;
+    public int idEvento;
+}
+
+
+3. El Controlador Central (Linea55Manager.cs)
+​Este es el cerebro. Corregí el Singleton y la lógica de despacho.
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Linea55Manager : MonoBehaviour
+{
+    public static Linea55Manager Instance;
+
+    [Header("Economía")]
+    public float dinero = 600000;
+    public float subsidioPendiente = 0;
+
+    [Header("Simulación")]
+    public float horaActual = 4.0f;
+    public float multiplicadorTiempo = 1.0f;
+    public List<Unidad> unidades = new List<Unidad>();
+    public List<Chofer> staff = new List<Chofer>();
+    public List<RouteData> rutasDisponibles = new List<RouteData>();
+
+    [Header("Ajustes de Velocidad")]
+    public float factorVelocidadGlobal = 0.5f;
+
+    void Awake() {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+
+    void Start() {
+        InicializarFlota();
+    }
+
+    void Update() {
+        float dt = Time.deltaTime * multiplicadorTiempo;
+        SimularTiempo(dt);
+        SimularUnidades(dt);
+    }
+
+    void SimularTiempo(float dt) {
+        horaActual = (horaActual + dt * 0.05f) % 24;
+    }
+
+    void SimularUnidades(float dt) {
+        foreach (var u in unidades) {
+            if (u.currentStopIdx == -1 || u.choferAsignado == null) continue;
+
+            if (u.averiadoTimer > 0) {
+                u.averiadoTimer -= dt;
+                continue;
+            }
+
+            // Probabilidad de rotura basada en frenos
+            if (Random.value < 0.0001f * (6 - u.frenosLvl) * dt) {
+                u.averiadoTimer = 10.0f;
+                Debug.Log($"<color=red>Interno {u.id}:</color> ¡Se quedó sin frenos!");
+                continue;
+            }
+
+            // Cálculo de velocidad profesional
+            float velBase = (0.05f + (u.motorLvl * 0.02f)) * factorVelocidadGlobal;
+            if (u.choferAsignado.personalidad == "Agresivo") velBase *= 1.3f;
+            if (u.choferAsignado.cansancio > 80) velBase *= 0.7f;
+
+            u.progreso += velBase * dt;
+            u.choferAsignado.cansancio += (0.05f / u.frenosLvl) * dt;
+
+            if (u.progreso >= 1.0f) {
+                ProcesarParada(u);
+            }
+        }
+    }
+
+    void ProcesarParada(Unidad u) {
+        u.progreso = 0;
+        u.currentStopIdx++;
+
+        // Simular flujo de gente
+        int bajan = Random.Range(0, u.pasajeros / 3);
+        u.pasajeros -= bajan;
+        
+        int suben = Random.Range(5, 20);
+        int puedenSubir = Mathf.Min(suben, u.capacidad - u.pasajeros);
+        u.pasajeros += puedenSubir;
+        
+        subsidioPendiente += puedenSubir * 620;
+
+        // Verificar fin de ruta usando el ScriptableObject
+        if (u.currentStopIdx >= u.rutaAsignada.paradas.Count) {
+            FinalizarViaje(u);
+        }
+    }
+
+    void FinalizarViaje(Unidad u) {
+        dinero -= u.choferAsignado.sueldo;
+        u.choferAsignado.moral -= Random.Range(5, 10);
+        u.viajesSinService++;
+
+        float recaudado = u.pasajeros * 620;
+        dinero += recaudado;
+        
+        Debug.Log($"Interno {u.id} terminó en {u.rutaAsignada.paradas[u.currentStopIdx - 1]}. Caja: +${recaudado}");
+        u.Reset();
+    }
+
+    public void DespacharCoche(string rutaID) {
+        Unidad bus = unidades.Find(x => x.currentStopIdx == -1);
+        Chofer chof = staff.Find(x => x.contratado && x.cansancio < 80 && x.idUnidadAsignada == -1);
+        RouteData ruta = rutasDisponibles.Find(r => r.ID == rutaID);
+
+        if (bus != null && chof != null && ruta != null) {
+            bus.currentStopIdx = 0;
+            bus.choferAsignado = chof;
+            bus.rutaAsignada = ruta;
+            chof.idUnidadAsignada = bus.id;
+        } else {
+            Debug.LogWarning("No hay recursos para despachar.");
+        }
+    }
+
+    void InicializarFlota() {
+        for (int i = 1; i <= 12; i++) {
+            unidades.Add(new Unidad { id = i });
+        }
+    }
+}
+
+
+4. Manejo de Eventos (EventSystem.cs)
+​Este script conecta los resultados de los pop-ups con el estado del Manager.
+
+using UnityEngine;
+
+public class EventSystem : MonoBehaviour 
+{
+    public void ProcesarEfectoEvento(GameEvent evento, int opcionElegida) {
+        switch (evento.idEvento) {
+            case 0: // Vendedor Ambulante
+                if (opcionElegida == 0) { // Permitir
+                    Linea55Manager.Instance.dinero += 2000;
+                    AfectarMoralStaff(-5);
+                }
+                break;
+            case 2: // Piquete en Ruta
+                if (opcionElegida == 0) { // Desviar
+                    AfectarCansancioStaff(15);
+                }
+                break;
+        }
+    }
+
+    void AfectarMoralStaff(float cantidad) {
+        foreach (var c in Linea55Manager.Instance.staff) {
+            c.moral = Mathf.Clamp(c.moral + cantidad, 0, 100);
+        }
+    }
+
+    void AfectarCansancioStaff(float cantidad) {
+        foreach (var c in Linea55Manager.Instance.staff) {
+            c.cansancio = Mathf.Clamp(c.cansancio + cantidad, 0, 100);
+        }
+    }
+}
